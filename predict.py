@@ -32,7 +32,7 @@ class Predictor(BasePredictor):
             k: Generator(
                 self.size, latent_dim_style, latent_dim_motion, channel_multiplier
             ).cuda()
-            for k in model_weights.keys()
+            for k in model_weights
         }
 
         for k, v in self.gen_models.items():
@@ -93,9 +93,7 @@ def load_image(filename, size):
 def img_preprocessing(img_path, size):
     img = load_image(img_path, size)  # [0, 1]
     img = torch.from_numpy(img).unsqueeze(0).float()  # [0, 1]
-    imgs_norm = (img - 0.5) * 2.0  # [-1, 1]
-
-    return imgs_norm
+    return (img - 0.5) * 2.0
 
 
 def vid_preprocessing(vid_path):

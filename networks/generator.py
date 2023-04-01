@@ -15,12 +15,8 @@ class Generator(nn.Module):
         return self.dec.direction(None)
 
     def synthesis(self, wa, alpha, feat):
-        img = self.dec(wa, alpha, feat)
-
-        return img
+        return self.dec(wa, alpha, feat)
 
     def forward(self, img_source, img_drive, h_start=None):
         wa, alpha, feats = self.enc(img_source, img_drive, h_start)
-        img_recon = self.dec(wa, alpha, feats)
-
-        return img_recon
+        return self.dec(wa, alpha, feats)

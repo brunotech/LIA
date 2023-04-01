@@ -16,8 +16,7 @@ class FusedLeakyReLU(nn.Module):
         self.scale = scale
 
     def forward(self, input):
-        out = fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
-        return out
+        return fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
 
 
 def upfirdn2d_native(input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1):
@@ -93,10 +92,7 @@ class EqualConv2d(nn.Module):
         self.stride = stride
         self.padding = padding
 
-        if bias:
-            self.bias = nn.Parameter(torch.zeros(out_channel))
-        else:
-            self.bias = None
+        self.bias = nn.Parameter(torch.zeros(out_channel)) if bias else None
 
     def forward(self, input):
 
@@ -248,24 +244,18 @@ class Encoder(nn.Module):
 
         # motion network
         fc = [EqualLinear(dim, dim)]
-        for i in range(3):
-            fc.append(EqualLinear(dim, dim))
-
+        fc.extend(EqualLinear(dim, dim) for _ in range(3))
         fc.append(EqualLinear(dim, dim_motion))
         self.fc = nn.Sequential(*fc)
 
     def enc_app(self, x):
 
-        h_source = self.net_app(x)
-
-        return h_source
+        return self.net_app(x)
 
     def enc_motion(self, x):
 
         h, _ = self.net_app(x)
-        h_motion = self.fc(h)
-
-        return h_motion
+        return self.fc(h)
 
     def forward(self, input_source, input_target, h_start=None):
 

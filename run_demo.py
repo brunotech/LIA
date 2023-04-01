@@ -22,9 +22,7 @@ def load_image(filename, size):
 def img_preprocessing(img_path, size):
     img = load_image(img_path, size)  # [0, 1]
     img = torch.from_numpy(img).unsqueeze(0).float()  # [0, 1]
-    imgs_norm = (img - 0.5) * 2.0  # [-1, 1]
-
-    return imgs_norm
+    return (img - 0.5) * 2.0
 
 
 def vid_preprocessing(vid_path):
@@ -50,12 +48,12 @@ class Demo(nn.Module):
 
         self.args = args
 
-        if args.model == 'vox':
-            model_path = 'checkpoints/vox.pt'
-        elif args.model == 'taichi':
+        if args.model == 'taichi':
             model_path = 'checkpoints/taichi.pt'
         elif args.model == 'ted':
             model_path = 'checkpoints/ted.pt'
+        elif args.model == 'vox':
+            model_path = 'checkpoints/vox.pt'
         else:
             raise NotImplementedError
 
@@ -66,9 +64,12 @@ class Demo(nn.Module):
         self.gen.eval()
 
         print('==> loading data')
-        self.save_path = args.save_folder + '/%s' % args.model
+        self.save_path = f'{args.save_folder}/{args.model}'
         os.makedirs(self.save_path, exist_ok=True)
-        self.save_path = os.path.join(self.save_path, Path(args.source_path).stem + '_' + Path(args.driving_path).stem + '.mp4')
+        self.save_path = os.path.join(
+            self.save_path,
+            f'{Path(args.source_path).stem}_{Path(args.driving_path).stem}.mp4',
+        )
         self.img_source = img_preprocessing(args.source_path, args.size).cuda()
         self.vid_target, self.fps = vid_preprocessing(args.driving_path)
         self.vid_target = self.vid_target.cuda()

@@ -23,9 +23,7 @@ def data_preprocessing(img_path, size):
     img = load_image(img_path, size)  # [0, 1]
     img = torch.from_numpy(img).unsqueeze(0).float()  # [0, 1]
 
-    imgs_norm = (img - 0.5) * 2.0  # [-1, 1]
-
-    return imgs_norm
+    return (img - 0.5) * 2.0
 
 
 def save_video(vid_gen, path, fps):

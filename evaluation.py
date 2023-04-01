@@ -22,8 +22,7 @@ def data_sampler(dataset, shuffle):
 
 def sample_data(loader):
     while True:
-        for batch in loader:
-            yield batch
+        yield from loader
 
 
 def load_image(filename, size):
@@ -37,15 +36,13 @@ def load_image(filename, size):
 
 def save_video(save_path, name, vid_target_recon, fps=10.0):
     vid = (vid_target_recon.permute(0, 2, 3, 4, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
-    torchvision.io.write_video(save_path + '%s.mp4' % name, vid[0].cpu(), fps=fps)
+    torchvision.io.write_video(f'{save_path}{name}.mp4', vid[0].cpu(), fps=fps)
 
 
 def data_preprocessing(img_path, size):
     img = load_image(img_path, size)  # [0, 1]
     img = torch.from_numpy(img).unsqueeze(0).float()  # [0, 1]
-    imgs_norm = (img - 0.5) * 2.0  # [-1, 1]
-
-    return imgs_norm
+    return (img - 0.5) * 2.0
 
 
 class Eva(nn.Module):
@@ -115,8 +112,8 @@ class Eva(nn.Module):
                 vid_recon = vid_recon.permute(0, 2, 1, 3, 4).squeeze(0)
                 loss_lpips.append(self.loss_fn.forward(vid_real, vid_recon.clamp(-1, 1)).mean().cpu().detach().numpy())
 
-        print("reconstruction loss: %s" % np.mean(loss_list))
-        print("lpips loss: %s" % np.mean(loss_lpips))
+        print(f"reconstruction loss: {np.mean(loss_list)}")
+        print(f"lpips loss: {np.mean(loss_lpips)}")
 
 
 if __name__ == '__main__':

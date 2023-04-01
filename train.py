@@ -23,15 +23,14 @@ def data_sampler(dataset, shuffle):
 
 def sample_data(loader):
     while True:
-        for batch in loader:
-            yield batch
+        yield from loader
 
 
 def display_img(idx, img, name, writer):
     img = img.clamp(-1, 1)
     img = ((img - img.min()) / (img.max() - img.min())).data
 
-    writer.add_images(tag='%s' % (name), global_step=idx, img_tensor=img)
+    writer.add_images(tag=f'{name}', global_step=idx, img_tensor=img)
 
 
 def write_loss(i, vgg_loss, l1_loss, g_loss, d_loss, writer):
@@ -56,8 +55,8 @@ def main(rank, world_size, args):
     device = torch.device("cuda")
 
     # make logging folder
-    log_path = os.path.join(args.exp_path, args.exp_name + '/log')
-    checkpoint_path = os.path.join(args.exp_path, args.exp_name + '/checkpoint')
+    log_path = os.path.join(args.exp_path, f'{args.exp_name}/log')
+    checkpoint_path = os.path.join(args.exp_path, f'{args.exp_name}/checkpoint')
 
     os.makedirs(log_path, exist_ok=True)
     os.makedirs(checkpoint_path, exist_ok=True)
@@ -183,5 +182,5 @@ if __name__ == "__main__":
     assert n_gpus >= 2
 
     world_size = n_gpus
-    print('==> training on %d gpus' % n_gpus)
+    print('==> training on %d gpus' % world_size)
     mp.spawn(main, args=(world_size, opts,), nprocs=world_size, join=True)

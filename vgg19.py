@@ -12,18 +12,20 @@ class ImagePyramide(torch.nn.Module):
 
     def __init__(self, scales, num_channels):
         super(ImagePyramide, self).__init__()
-        downs = {}
-        for scale in scales:
-            downs[str(scale).replace('.', '-')] = AntiAliasInterpolation2d(num_channels, scale)
+        downs = {
+            str(scale).replace('.', '-'): AntiAliasInterpolation2d(
+                num_channels, scale
+            )
+            for scale in scales
+        }
         self.downs = nn.ModuleDict(downs)
 
     def forward(self, x):
 
-        out_dict = {}
-        for scale, down_module in self.downs.items():
-            out_dict['prediction_' + str(scale).replace('-', '.')] = down_module(x)
-
-        return out_dict
+        return {
+            'prediction_' + str(scale).replace('-', '.'): down_module(x)
+            for scale, down_module in self.downs.items()
+        }
 
 
 class Vgg19(torch.nn.Module):
@@ -73,9 +75,7 @@ class Vgg19(torch.nn.Module):
         h_relu3 = self.slice3(h_relu2)
         h_relu4 = self.slice4(h_relu3)
         h_relu5 = self.slice5(h_relu4)
-        out = [h_relu1, h_relu2, h_relu3, h_relu4, h_relu5]
-
-        return out
+        return [h_relu1, h_relu2, h_relu3, h_relu4, h_relu5]
 
 
 class VGGLoss(nn.Module):
@@ -97,8 +97,8 @@ class VGGLoss(nn.Module):
 
         vgg_loss = 0
         for scale in self.scales:
-            recon_vgg = self.vgg(pyramid_recon['prediction_' + str(scale)])
-            real_vgg = self.vgg(pyramid_real['prediction_' + str(scale)])
+            recon_vgg = self.vgg(pyramid_recon[f'prediction_{str(scale)}'])
+            real_vgg = self.vgg(pyramid_real[f'prediction_{str(scale)}'])
 
             for i, weight in enumerate(self.weights):
                 value = torch.abs(recon_vgg[i] - real_vgg[i].detach()).mean()

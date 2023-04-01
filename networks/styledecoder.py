@@ -17,10 +17,7 @@ class FusedLeakyReLU(nn.Module):
         self.scale = scale
 
     def forward(self, input):
-        # print("FusedLeakyReLU: ", input.abs().mean())
-        out = fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
-        # print("FusedLeakyReLU: ", out.abs().mean())
-        return out
+        return fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
 
 
 def upfirdn2d_native(input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1):
@@ -142,10 +139,7 @@ class EqualConv2d(nn.Module):
         self.stride = stride
         self.padding = padding
 
-        if bias:
-            self.bias = nn.Parameter(torch.zeros(out_channel))
-        else:
-            self.bias = None
+        self.bias = nn.Parameter(torch.zeros(out_channel)) if bias else None
 
     def forward(self, input):
 
@@ -286,10 +280,7 @@ class NoiseInjection(nn.Module):
 
     def forward(self, image, noise=None):
 
-        if noise is None:
-            return image
-        else:
-            return image + self.weight * noise
+        return image if noise is None else image + self.weight * noise
 
 
 class ConstantInput(nn.Module):
@@ -300,9 +291,7 @@ class ConstantInput(nn.Module):
 
     def forward(self, input):
         batch = input.shape[0]
-        out = self.input.repeat(batch, 1, 1, 1)
-
-        return out
+        return self.input.repeat(batch, 1, 1, 1)
 
 
 class StyledConv(nn.Module):
@@ -440,12 +429,11 @@ class Direction(nn.Module):
 
         if input is None:
             return Q
-        else:
-            input_diag = torch.diag_embed(input)  # alpha, diagonal matrix
-            out = torch.matmul(input_diag, Q.T)
-            out = torch.sum(out, dim=1)
+        input_diag = torch.diag_embed(input)  # alpha, diagonal matrix
+        out = torch.matmul(input_diag, Q.T)
+        out = torch.sum(out, dim=1)
 
-            return out
+        return out
 
 
 class Synthesis(nn.Module):
@@ -505,19 +493,17 @@ class Synthesis(nn.Module):
 
         bs = wa.size(0)
 
-        if alpha is not None:
-            # generating moving directions
-            if len(alpha) > 1:
-                directions_target = self.direction(alpha[0])  # target
-                directions_source = self.direction(alpha[1])  # source
-                directions_start = self.direction(alpha[2])  # start
-                latent = wa + (directions_target - directions_start) + directions_source
-            else:
-                directions = self.direction(alpha[0])
-                latent = wa + directions  # wa + directions
-        else:
+        if alpha is None:
             latent = wa
 
+        elif len(alpha) > 1:
+            directions_target = self.direction(alpha[0])  # target
+            directions_source = self.direction(alpha[1])  # source
+            directions_start = self.direction(alpha[2])  # start
+            latent = wa + (directions_target - directions_start) + directions_source
+        else:
+            directions = self.direction(alpha[0])
+            latent = wa + directions  # wa + directions
         inject_index = self.n_latent
         latent = latent.unsqueeze(1).repeat(1, inject_index, 1)
 
@@ -537,6 +523,4 @@ class Synthesis(nn.Module):
                 skip = to_rgb(out_warp, skip)
             i += 2
 
-        img = skip
-
-        return img
+        return skip

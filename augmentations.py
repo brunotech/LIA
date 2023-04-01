@@ -104,10 +104,7 @@ class ColorJitter(object):
         else:
             saturation_factor = None
 
-        if hue > 0:
-            hue_factor = random.uniform(-hue, hue)
-        else:
-            hue_factor = None
+        hue_factor = random.uniform(-hue, hue) if hue > 0 else None
         return brightness_factor, contrast_factor, saturation_factor, hue_factor
 
     def __call__(self, img_source, img_target):
